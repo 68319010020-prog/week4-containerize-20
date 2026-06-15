@@ -101,23 +101,37 @@ async function initDb() {
   `);
   console.log('✅ Table products ready');
 
-  // Seed data ถ้า table ยังว่าง
-  const { rows } = await pool.query('SELECT COUNT(*) FROM products');
-  if (parseInt(rows[0].count) === 0) {
-    await pool.query(`
-      INSERT INTO products (name, category, price, stock, description) VALUES
-      ('MacBook Air M3',        'Electronics', 44900, 15, 'Apple MacBook Air chip M3 RAM 8GB'),
-      ('iPhone 16 Pro',         'Electronics', 42900,  8, 'Apple iPhone 16 Pro 256GB'),
-      ('Nike Air Max 270',      'Footwear',     4590, 32, 'รองเท้าวิ่ง Nike ไซส์ 38-45'),
-      ('เสื้อยืด Uniqlo Dry-Ex','Clothing',      390, 87, 'เสื้อยืดระบายอากาศ สีขาว'),
-      ('กล้อง Sony ZV-E10 II',  'Electronics', 24990,  4, 'กล้อง Mirrorless สำหรับ Vlogger'),
-      ('หูฟัง AirPods Pro 2',   'Electronics',  9490, 20, 'หูฟัง True Wireless ANC'),
-      ('โต๊ะทำงาน Flexispot E7','Furniture',   18900,  3, 'โต๊ะปรับระดับไฟฟ้า 140x70 cm'),
-      ('กระเป๋า Anello',        'Bags',         1290, 45, 'กระเป๋าเป้ผ้า Canvas ทรงสี่เหลี่ยม'),
-      ('หนังสือ Clean Code',    'Books',          650, 12, 'โดย Robert C. Martin'),
-      ('สายชาร์จ USB-C 100W',   'Accessories',    390,  6, 'สายชาร์จ 2 เมตร รองรับ PD 100W')
-    `);
-    console.log('🌱 Seed data inserted (10 products)');
+  const seedProducts = [
+    ['MacBook Air M3',         'Electronics', 44900, 15, 'Apple MacBook Air chip M3 RAM 8GB'],
+    ['iPhone 16 Pro',          'Electronics', 42900,  8, 'Apple iPhone 16 Pro 256GB'],
+    ['Nike Air Max 270',       'Footwear',     4590, 32, 'รองเท้าวิ่ง Nike ไซส์ 38-45'],
+    ['เสื้อยืด Uniqlo Dry-Ex', 'Clothing',      390, 87, 'เสื้อยืดระบายอากาศ สีขาว'],
+    ['กล้อง Sony ZV-E10 II',   'Electronics', 24990,  4, 'กล้อง Mirrorless สำหรับ Vlogger'],
+    ['หูฟัง AirPods Pro 2',    'Electronics',  9490, 20, 'หูฟัง True Wireless ANC'],
+    ['โต๊ะทำงาน Flexispot E7', 'Furniture',   18900,  3, 'โต๊ะปรับระดับไฟฟ้า 140x70 cm'],
+    ['กระเป๋า Anello',         'Bags',         1290, 45, 'กระเป๋าเป้ผ้า Canvas ทรงสี่เหลี่ยม'],
+    ['หนังสือ Clean Code',     'Books',          650, 12, 'โดย Robert C. Martin'],
+    ['สายชาร์จ USB-C 100W',    'Accessories',    390,  6, 'สายชาร์จ 2 เมตร รองรับ PD 100W'],
+    ['ลูกบาส Spalding NBA', 'Sports',         890, 18, 'ลูกบasketball ขนาด 7 อย่างเป็นทางการ'],
+    ['น้ำดื่มสิงห์ 600ml (แพ็ค 12)', 'Food',     120, 55, 'น้ำดื่มบรรจุขวด PET แพ็คละ 12 ขวด'],
+    ['เก้าอี้ Gaming Secretlab', 'Furniture', 15900,  7, 'เก้าอี้เกมมิ่ง Ergonomic ปรับเอนได้'],
+    ['เครื่องปั่น Philips HR2541', 'Tools',    3290,  9, 'เครื่องปั่นอเนกประสงค์ 500W โถแก้ว'],
+    ['แว่นตากันแดด Ray-Ban',   'Accessories',  4590, 14, 'แว่นกันแดด Classic Aviator UV400'],
+  ];
+
+  const { rows } = await pool.query('SELECT name FROM products');
+  const existing = new Set(rows.map(r => r.name));
+  const missing  = seedProducts.filter(p => !existing.has(p[0]));
+
+  if (missing.length > 0) {
+    for (const [name, category, price, stock, description] of missing) {
+      await pool.query(
+        `INSERT INTO products (name, category, price, stock, description)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [name, category, price, stock, description]
+      );
+    }
+    console.log(`🌱 Seed data inserted (${missing.length} products)`);
   }
 }
 
