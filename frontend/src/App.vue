@@ -21,8 +21,7 @@ let debounceTimer = null            // สำหรับ debounce search input
 let notificationTimer = null        // timer สำหรับ notification auto-close
 // ── Computed ─────────────────────────────────────────────────────
 
-// ✅ กรองสินค้าตาม search + catFilter พร้อมกัน
-// ใช้ computed เพื่อให้ทำงานอัตโนมัติเมื่อ search/catFilter/products เปลี่ยน
+// กรองสินค้าตาม search + catFilter พร้อมกัน
 const filtered = computed(() => {
   const s = search.value.toLowerCase()
   return products.value.filter(p => {
@@ -36,8 +35,7 @@ const filtered = computed(() => {
   })
 })
 
-// 📂 สร้าง list ของ categories จาก products ที่มีอยู่ (unique + sort)
-// นำมาใช้ใน dropdown select เพื่อให้เลือก filter ได้อย่างง่าย
+// สร้าง list ของ categories จาก products ที่มีอยู่ (unique + sort)
 const categories = computed(() =>
   [...new Set(products.value.map(p => p.category))].sort()
 )
@@ -49,11 +47,7 @@ const sanitize = (str) => {
   return div.innerHTML
 }
 
-// 📊 คำนวณ 4 ตัวเลข dashboard stats ด้านบนของหน้า
-// - total: จำนวนสินค้าทั้งหมด
-// - lowStock: สินค้าที่มีสต็อกน้อยกว่า 10 ชิ้น
-// - totalItems: รวมจำนวนสต็อกทั้งหมด
-// - totalValue: มูลค่ารวมของสต็อก (ราคา × ปริมาณ)
+// คำนวณ 4 ตัวเลข dashboard stats
 const stats = computed(() => ({
   total:      products.value.length,
   lowStock:   products.value.filter(p => p.stock < 10).length,
@@ -70,6 +64,7 @@ function showNotification(message, type = 'success', duration = 3000) {
 }
 
 function validateForm() {
+  // รีเซ็ต error แต่ละฟิลด์ก่อนตรวจสอบข้อมูลใหม่
   formErrors.value = {}
   const { name, category, price, stock } = form.value
   
@@ -78,27 +73,27 @@ function validateForm() {
   if (!price || parseFloat(price) < 0) formErrors.value.price = 'ราคาต้องมากกว่า 0'
   if (stock === '' || parseInt(stock) < 0) formErrors.value.stock = 'จำนวนสต็อกต้องมากกว่า 0'
   
+  // คืนค่า true เมื่อไม่มี error เลย
   return Object.keys(formErrors.value).length === 0
 }
 
 function handleKeydown(e) {
+  // กด ESC เพื่อปิด modal หรือ confirm dialog ได้ทันที
   if (e.key === 'Escape') {
     if (showModal.value) showModal.value = false
     if (confirmDelete.value) confirmDelete.value = null
   }
 }
 
-// ⏱️ debounce: รอ 280ms หลัง user หยุดพิมพ์แล้วค่อย fetch
-// (ป้องกัน API ถูกเรียกทุก keystroke ทำให้ server overload)
-// timeout ก่อนหน้านี้จะ clear เพื่อเริ่มนับใหม่
+// debounce: รอ 280ms หลัง user หยุดพิมพ์แล้วค่อย fetch
+// (ป้องกัน API ถูกเรียกทุก keystroke)
 function debounceFetch() {
   clearTimeout(debounceTimer)
   debounceTimer = setTimeout(fetchProducts, 280)
 }
 
-// 🌐 ดึงสินค้าจาก API (ส่ง search + catFilter เป็น query params)
+// ดึงสินค้าจาก API (ส่ง search + catFilter เป็น query params)
 // ฟังก์ชันนี้ตรวจสอบค่า search และ category filter ก่อนส่งไปยัง API
-// try/catch: ถ้า error ก็ให้ products = [] แล้วแสดง loading = false
 async function fetchProducts() {
   loading.value = true
   const q = new URLSearchParams()
@@ -106,25 +101,25 @@ async function fetchProducts() {
   if (search.value)    q.set('search',   search.value)
   if (catFilter.value) q.set('category', catFilter.value)
   try {
+    // ดึงรายการสินค้าจาก backend แล้วบันทึกลง state
     const res = await fetch(`/api/products?${q}`)
     products.value = await res.json()
   } catch {
+    // ถ้า fetch ล้มเหลว ให้ reset รายการสินค้าเป็นว่าง
     products.value = []
   } finally {
     loading.value = false
   }
 }
 
-// ➕ เปิด modal แบบ Add (clear form)
-// ตั้ง editingId = null เพื่อให้ saveProduct รู้ว่าเป็น POST ไม่ใช่ PUT
+// เปิด modal แบบ Add (clear form)
 function openAdd() {
   editingId.value = null
   form.value = { name: '', category: '', price: '', stock: 0, description: '' }
   showModal.value = true
 }
 
-// ✏️ เปิด modal แบบ Edit (copy ข้อมูลจาก product เข้า form)
-// เก็บ p.id ใน editingId เพื่อให้ saveProduct รู้ว่าเป็น PUT request
+// เปิด modal แบบ Edit (copy ข้อมูลจาก product เข้า form)
 function openEdit(p) {
   editingId.value = p.id
   form.value = {
@@ -135,9 +130,8 @@ function openEdit(p) {
   showModal.value = true
 }
 
-// 💾 บันทึก (ถ้า editingId มีค่า = PUT, ถ้าเป็น null = POST)
-// ขั้นตอน: validate → sanitize → fetchProduct หรือ putProduct → notifyUser → refresh
-// ใช้ isSaving flag เพื่อ disable button และแสดง loading state
+// บันทึก (ถ้า editingId มีค่า = PUT, ถ้าเป็น null = POST)
+// ฟังก์ชันนี้จะเลือก method และ URL ตามว่ากำลัง add หรือ edit
 async function saveProduct() {
   if (!validateForm()) {
     showNotification('กรุณาปรหมว่าข้อมูลให้ถูกต้อง', 'error')
@@ -155,10 +149,12 @@ async function saveProduct() {
     }
     const url    = editingId.value ? `/api/products/${editingId.value}` : '/api/products'
     const method = editingId.value ? 'PUT' : 'POST'
+    // เลือก endpoint และ method ให้ตรงกับ action ที่ user ต้องการ
     const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     
     if (!res.ok) throw new Error('แห่น API ตอบตรอมมูลคำขอ')
     
+    // ปิด modal เมื่อบันทึกสำเร็จ และรีเฟรชข้อมูลใหม่
     showModal.value = false
     showNotification(
       editingId.value ? 'สองหรแก่หมวดยังไง้แล้ว' : 'เพิ่มสินค้าสำเร็จ!',
@@ -172,12 +168,12 @@ async function saveProduct() {
   }
 }
 
-// 🗑️ ลบสินค้า (จาก confirm dialog)
+// ลบสินค้า
 // ส่ง DELETE request ไปยัง API เพื่อลบสินค้าแล้ว refresh รายการ
-// ใช้ isDeleting flag เพื่อ disable button และแสดง loading state
 async function deleteProduct(id) {
   isDeleting.value = true
   try {
+    // ส่งคำสั่งลบสินค้าไปที่ backend
     const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
     if (!res.ok) throw new Error('ไม่สามารถลบสินค้า')
     
@@ -212,8 +208,7 @@ function catClass(cat) {
   return m[cat] || 'c-other'  // ส่งค่า class อื่น ถ้า category ไม่ตรงกับรายการ
 }
 
-// 🚀 โหลดสินค้าทันทีเมื่อ component mount ครั้งแรก
-// เพิ่ม keyboard listener เพื่อให้ ESC key ปิด modal/dialog
+// โหลดสินค้าทันทีเมื่อ component mount ครั้งแรก
 onMounted(() => {
   fetchProducts()
   window.addEventListener('keydown', handleKeydown)
@@ -247,8 +242,7 @@ onUnmounted(() => {
 
     <main class="main">
 
-      <!-- 📊 STATS DASHBOARD -->
-    <!-- แสดง 4 ตัวเลขสำคัญ: จำนวนสินค้า, สต็อกใกล้หมด, รวมสต็อก, มูลค่ารวม -->
+      <!-- STATS DASHBOARD -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon si-green">📦</div>
@@ -282,15 +276,13 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- ⚠️ LOW STOCK ALERT -->
-      <!-- แสดงแจ้งเตือนถ้ามีสินค้าที่มีสต็อกน้อยกว่า 10 ชิ้น -->
+      <!-- LOW STOCK ALERT -->
       <div class="alert-low" v-if="stats.lowStock > 0">
         🚨 มีสินค้า <strong>{{ stats.lowStock }} รายการ</strong>
         ที่มีจำนวนสต็อกน้อยกว่า 10 ชิ้น — กรุณาตรวจสอบและเติมสต็อก
       </div>
 
-      <!-- 🔍 TOOLBAR -->
-      <!-- search input + category filter dropdown + result counter -->
+      <!-- TOOLBAR -->
       <div class="toolbar">
         <input
           v-model="search"
@@ -306,15 +298,13 @@ onUnmounted(() => {
           แสดง {{ filtered.length }} / {{ products.length }} รายการ
         </span>
       </div>
-      <!-- ⏳ LOADING STATE -->
-      <!-- แสดงเมื่อกำลัง fetch ข้อมูลจาก API -->
+            <!-- LOADING -->
       <div class="state-box" v-if="loading">
         <div class="state-icon">⏳</div>
         <div>กำลังโหลดข้อมูลสินค้า...</div>
       </div>
 
-      <!-- 📭 EMPTY STATE -->
-      <!-- แสดงเมื่อไม่มีสินค้าตามเงื่อนไข (ไม่พบการค้นหา, filter ว่าง, หรือระบบยังไม่มีสินค้า) -->
+      <!-- EMPTY -->
       <div class="state-box" v-else-if="filtered.length === 0">
         <div class="state-icon">📭</div>
         <div class="state-title">ไม่พบสินค้า</div>
@@ -323,8 +313,7 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- 📦 PRODUCT GRID -->
-      <!-- แสดงรายการสินค้าในรูปแบบ card grid พร้อม edit/delete button -->
+      <!-- PRODUCT GRID -->
       <div class="product-grid" v-else>
         <div
           v-for="p in filtered"
@@ -365,9 +354,7 @@ onUnmounted(() => {
       </div>
 
     </main>
-    <!-- ➕ ADD/EDIT MODAL -->
-    <!-- Modal สำหรับเพิ่มสินค้าใหม่หรือแก้ไขสินค้าที่มีอยู่ -->
-    <!-- @click.self=\"showModal = false\" ปิด modal เมื่อคลิกพื้นหลัง (overlay) -->
+        <!-- ADD/EDIT MODAL -->
     <div class="overlay" v-if="showModal" @click.self="showModal = false">
       <div class="modal">
         <div class="modal-title">
@@ -413,9 +400,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 🗑️ DELETE CONFIRM DIALOG -->
-    <!-- Modal ยืนยันก่อนลบสินค้า (ป้องกันลบผิด) -->
-    <!-- แสดงชื่อสินค้าและเตือนว่าการกระทำไม่สามารถย้อนกลับได้ -->
+    <!-- DELETE CONFIRM -->
     <div class="overlay" v-if="confirmDelete" @click.self="confirmDelete = null">
       <div class="modal confirm">
         <div class="confirm-icon">🗑️</div>
@@ -437,10 +422,8 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* 🎨 RESET & VARIABLES */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* CSS custom properties ใช้สำหรับ spacing, colors เพื่อให้ maintain ได้ง่าย */
 :root {
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -454,19 +437,15 @@ onUnmounted(() => {
   --color-accent: #f472b6;
 }
 
-/* 📱 MAIN APP CONTAINER */
 .app-shell {
   min-height: 100vh;
-  /* gradient background: ขาว ← ← สีฟ้าเบา ให้ look soft และ modern */
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   color: var(--color-text-primary);
   line-height: 1.6;
 }
 
-/* 🔝 STICKY HEADER */
 .app-header {
   position: sticky; top: 0; z-index: 100;
-  /* glass-morphism: ขาว semi-transparent + blur background */
   background: rgba(255, 255, 255, 0.95);
   border-bottom: 1px solid var(--color-border);
   backdrop-filter: blur(10px);
@@ -569,14 +548,11 @@ onUnmounted(() => {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
 }
-/* 🎴 PRODUCT CARD */
 .product-card {
   background: #ffffff;
   border: 1px solid var(--color-border);
   border-radius: 16px; overflow: hidden;
-  /* smooth transition สำหรับ hover effects */
   transition: all 0.3s ease;
-  /* subtle shadow ให้ดูมีความลึก */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 .product-card:hover {
@@ -639,10 +615,8 @@ onUnmounted(() => {
 .btn-del  { background: rgba(244, 114, 182, 0.1); color: #be185d; }
 .btn-del:hover  { background: rgba(244, 114, 182, 0.2); }
 
-/* 🌫️ MODAL OVERLAY */
 .overlay {
   position: fixed; inset: 0;
-  /* กึ่งโปร่งใส + blur เพื่อให้ดูเป็น focus บน modal */
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center;
@@ -726,26 +700,21 @@ onUnmounted(() => {
   background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;
 }
 
-/* 🎬 ANIMATION: NOTIFICATION SLIDE */
-/* Slide in จากขวา + fade in */
 @keyframes slideIn {
   from { transform: translateX(420px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
-/* Slide out ไปขวา + fade out */
 @keyframes slideOut {
   from { transform: translateX(0); opacity: 1; }
   to { transform: translateX(420px); opacity: 0; }
 }
 
-/* ❌ FORM VALIDATION ERROR */
-/* แสดง inline error message ใต้ input field */
+/* Form Validation Error */
 .form-error {
   font-size: 0.8rem; color: #dc2626; margin-top: 0.4rem; font-weight: 600;
 }
 
-/* 🔒 BUTTON DISABLED STATE */
-/* ลดความ opacity และ pointer-events เพื่อแสดง disabled state */
+/* Button Disabled State */
 .btn-save:disabled, .btn-danger-confirm:disabled {
   opacity: 0.6; cursor: not-allowed;
 }
@@ -753,8 +722,6 @@ onUnmounted(() => {
   opacity: 0.5; cursor: not-allowed;
 }
 
-/* 📱 RESPONSIVE: MOBILE DEVICES */
-/* ปรับ layout ให้ responsive บนหน้าจอ smartphone */
 @media (max-width: 640px) {
   .form-row { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
