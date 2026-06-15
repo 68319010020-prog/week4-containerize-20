@@ -237,6 +237,7 @@ onUnmounted(() => {
           <div class="logo-sub">ระบบจัดการสินค้าคงคลัง</div>
         </div>
       </div>
+      <div class="user-badge">ธเนศพล วารปรีดี 020</div>
       <button class="btn-add" @click="openAdd">+ เพิ่มสินค้า</button>
     </header>
 
@@ -430,45 +431,58 @@ onUnmounted(() => {
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
-  --color-text-primary: #1a202c;
-  --color-text-secondary: #64748b;
-  --color-bg-light: #f8fafc;
-  --color-border: #e2e8f0;
-  --color-accent: #f472b6;
+  --color-text-primary: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-bg-light: #0b1120;
+  --color-bg-card: #0f172a;
+  --color-border: #334155;
+  --color-accent: #fbbf24;
+  --color-accent-2: #fb7185;
 }
 
 .app-shell {
   min-height: 100vh;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: linear-gradient(160deg, #02040b 0%, #0b1120 100%);
   color: var(--color-text-primary);
   line-height: 1.6;
 }
 
 .app-header {
   position: sticky; top: 0; z-index: 100;
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid var(--color-border);
+  background: rgba(15, 23, 42, 0.96);
+  border-bottom: 1px solid rgba(100, 116, 139, 0.2);
   backdrop-filter: blur(10px);
   height: 70px; padding: 0 var(--spacing-lg);
   display: flex; align-items: center; gap: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 .logo { display: flex; align-items: center; gap: 0.75rem; }
 .logo-icon { font-size: 1.8rem; }
-.logo-name { font-weight: 800; font-size: 1.25rem; color: #fbbf24; line-height: 1; letter-spacing: -0.5px; }
+.logo-name { font-weight: 800; font-size: 1.25rem; color: var(--color-accent); line-height: 1; letter-spacing: -0.5px; }
 .logo-sub  { font-size: 0.75rem; color: var(--color-text-secondary); font-weight: 500; }
 .btn-add {
   margin-left: auto;
   background: linear-gradient(135deg, #facc15 0%, #f472b6 100%);
-  color: #ffffff;
+  color: #0f172a;
   border: none; border-radius: 10px;
-  padding: 0.7rem 1.4rem; font-size: 0.95rem; font-weight: 600;
+  padding: 0.8rem 1.5rem; font-size: 0.95rem; font-weight: 700;
   cursor: pointer; transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(244, 114, 182, 0.2);
+  box-shadow: 0 8px 24px rgba(251, 191, 36, 0.25);
 }
 .btn-add:hover { 
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(244, 114, 182, 0.3);
+  box-shadow: 0 10px 28px rgba(251, 191, 36, 0.35);
+}
+
+.user-badge {
+  background: #1f2937;
+  color: #f8fafc;
+  border-radius: 9999px;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .main { max-width: 1200px; margin: 0 auto; padding: var(--spacing-xl) var(--spacing-lg); }
@@ -479,16 +493,17 @@ onUnmounted(() => {
   gap: 1.25rem; margin-bottom: 2rem;
 }
 .stat-card {
-  background: #ffffff;
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  border: 1px solid rgba(100, 116, 139, 0.25);
   border-radius: 14px; padding: 1.5rem;
   display: flex; align-items: center; gap: 1.2rem;
   transition: all 0.3s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
 }
 .stat-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border-color: #fbbf24;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.35);
+  border-color: rgba(251, 191, 36, 0.45);
 }
 .stat-icon {
   width: 52px; height: 52px; border-radius: 12px;
@@ -515,32 +530,32 @@ onUnmounted(() => {
 .toolbar { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; align-items: center; }
 .input-search {
   flex: 1; min-width: 220px;
-  padding: 0.75rem 1.1rem; border: 1.5px solid var(--color-border); border-radius: 10px;
+  padding: 0.85rem 1.1rem; border: 1.5px solid rgba(100, 116, 139, 0.35); border-radius: 10px;
   font-size: 0.95rem; outline: none; transition: all 0.3s ease;
-  background: #ffffff; color: var(--color-text-primary);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  background: #0f172a; color: var(--color-text-primary);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.5);
 }
-.input-search::placeholder { color: #cbd5e1; }
+.input-search::placeholder { color: #94a3b8; }
 .input-search:focus { 
   border-color: #fbbf24;
-  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
-  background: #fafaf9;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.12);
+  background: #020617;
 }
 .input-select {
-  padding: 0.75rem 1rem; border: 1.5px solid var(--color-border); border-radius: 10px;
-  background: #ffffff; color: var(--color-text-primary); font-size: 0.95rem; outline: none; cursor: pointer;
+  padding: 0.75rem 1rem; border: 1.5px solid rgba(100, 116, 139, 0.35); border-radius: 10px;
+  background: #0f172a; color: var(--color-text-primary); font-size: 0.95rem; outline: none; cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.5);
 }
 .input-select:focus { 
   border-color: #fbbf24;
-  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.12);
 }
 .result-count { font-size: 0.85rem; color: var(--color-text-secondary); white-space: nowrap; font-weight: 500; }
 
-.state-box { text-align: center; padding: 4rem 1.5rem; color: var(--color-text-secondary); }
-.state-icon { font-size: 3.5rem; margin-bottom: 1rem; opacity: 0.8; }
-.state-title { font-size: 1.2rem; font-weight: 700; color: #f472b6; margin-bottom: 0.5rem; }
+.state-box { text-align: center; padding: 4rem 1.5rem; color: var(--color-text-primary); background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(100, 116, 139, 0.3); border-radius: 18px; }
+.state-icon { font-size: 3.5rem; margin-bottom: 1rem; opacity: 0.9; }
+.state-title { font-size: 1.2rem; font-weight: 700; color: #facc15; margin-bottom: 0.5rem; }
 .state-desc { font-size: 0.95rem; color: var(--color-text-secondary); line-height: 1.6; }
 
 .product-grid {
@@ -549,16 +564,16 @@ onUnmounted(() => {
   gap: 1.5rem;
 }
 .product-card {
-  background: #ffffff;
-  border: 1px solid var(--color-border);
+  background: #111827;
+  border: 1px solid rgba(100, 116, 139, 0.3);
   border-radius: 16px; overflow: hidden;
   transition: all 0.3s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.26);
 }
 .product-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-  border-color: #fbbf24;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+  border-color: rgba(251, 191, 36, 0.55);
 }
 .product-card.card-low  { border-color: rgba(251, 113, 133, 0.3); }
 .product-card.card-out  { border-color: var(--color-border); opacity: 0.7; }

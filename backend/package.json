@@ -8,7 +8,7 @@
     "lint": "eslint ."
   },
   "keywords": [],
-  "author": "",
+  "author": "ธเนศพล วารปรีดี 020",
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.6",
