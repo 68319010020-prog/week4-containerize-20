@@ -53,9 +53,11 @@ function debounceFetch() {
 }
 
 // ดึงสินค้าจาก API (ส่ง search + catFilter เป็น query params)
+// ฟังก์ชันนี้ตรวจสอบค่า search และ category filter ก่อนส่งไปยัง API
 async function fetchProducts() {
   loading.value = true
   const q = new URLSearchParams()
+  // สร้าง query string จากค่า search และ category ที่เลือก
   if (search.value)    q.set('search',   search.value)
   if (catFilter.value) q.set('category', catFilter.value)
   try {
@@ -87,6 +89,7 @@ function openEdit(p) {
 }
 
 // บันทึก (ถ้า editingId มีค่า = PUT, ถ้าเป็น null = POST)
+// ฟังก์ชันนี้จะเลือก method และ URL ตามว่ากำลัง add หรือ edit
 async function saveProduct() {
   const body = {
     name:        form.value.name,
@@ -95,6 +98,7 @@ async function saveProduct() {
     stock:       parseInt(form.value.stock),
     description: form.value.description
   }
+  // เลือก URL และ method HTTP ตามว่าเป็น update หรือสร้างใหม่
   const url    = editingId.value ? `/api/products/${editingId.value}` : '/api/products'
   const method = editingId.value ? 'PUT' : 'POST'
   await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -103,10 +107,11 @@ async function saveProduct() {
 }
 
 // ลบสินค้า
+// ส่ง DELETE request ไปยัง API เพื่อลบสินค้าแล้ว refresh รายการ
 async function deleteProduct(id) {
   await fetch(`/api/products/${id}`, { method: 'DELETE' })
   confirmDelete.value = null
-  fetchProducts()
+  fetchProducts()  // รีเฟรชรายการสินค้าหลังการลบ
 }
 
 // คืน CSS class ตาม stock level (ใช้กับ stock bar และตัวเลข)
@@ -118,6 +123,7 @@ function stockClass(s) {
 }
 
 // คืน CSS class ตาม category (ใช้กับ badge สี)
+// ใช้ object map เพื่อจับคู่ชื่อ category กับ CSS class ที่เกี่ยวข้อง
 function catClass(cat) {
   const m = {
     Electronics: 'c-elec', Clothing: 'c-cloth',
@@ -126,7 +132,7 @@ function catClass(cat) {
     Furniture:   'c-furn',  Bags:     'c-bag',
     Accessories: 'c-acc',   Tools:    'c-tool'
   }
-  return m[cat] || 'c-other'
+  return m[cat] || 'c-other'  // ส่งค่า class อื่น ถ้า category ไม่ตรงกับรายการ
 }
 
 // โหลดสินค้าทันทีเมื่อ component mount ครั้งแรก
@@ -134,7 +140,7 @@ onMounted(fetchProducts)
 </script>
 
 <template>
-  <div>
+  <div class="app-shell">
 
     <!-- HEADER -->
     <header class="app-header">
@@ -155,28 +161,28 @@ onMounted(fetchProducts)
         <div class="stat-card">
           <div class="stat-icon si-green">📦</div>
           <div class="stat-body">
-            <div class="stat-val" style="color:#059669">{{ stats.total }}</div>
+            <div class="stat-val stat-yellow">{{ stats.total }}</div>
             <div class="stat-label">สินค้าทั้งหมด</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon si-red">⚠️</div>
           <div class="stat-body">
-            <div class="stat-val" style="color:#dc2626">{{ stats.lowStock }}</div>
-            <div class="stat-label">สต็อกใกล้หมด (<10)</div>
+            <div class="stat-val stat-pink">{{ stats.lowStock }}</div>
+            <div class="stat-label">สต็อกใกล้หมด (&lt;10)</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon si-amber">📊</div>
           <div class="stat-body">
-            <div class="stat-val" style="color:#d97706">{{ stats.totalItems.toLocaleString() }}</div>
+            <div class="stat-val stat-yellow">{{ stats.totalItems.toLocaleString() }}</div>
             <div class="stat-label">จำนวนสต็อกรวม</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon si-blue">💰</div>
           <div class="stat-body">
-            <div class="stat-val" style="color:#2563eb;font-size:1.3rem">
+            <div class="stat-val stat-pink stat-money">
               ฿{{ Math.round(stats.totalValue).toLocaleString() }}
             </div>
             <div class="stat-label">มูลค่าสต็อกรวม</div>
@@ -311,7 +317,7 @@ onMounted(fetchProducts)
         <div class="confirm-title">ยืนยันการลบสินค้า</div>
         <div class="confirm-desc">
           คุณต้องการลบ <strong>{{ confirmDelete?.name }}</strong> ออกจากระบบหรือไม่?<br>
-          <span style="color:#dc2626">การกระทำนี้ไม่สามารถย้อนกลับได้</span>
+          <span style="color:#fb7185">การกระทำนี้ไม่สามารถย้อนกลับได้</span>
         </div>
         <div class="confirm-actions">
           <button class="btn-cancel" @click="confirmDelete = null">ยกเลิก</button>
@@ -326,25 +332,32 @@ onMounted(fetchProducts)
 <style scoped>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+.app-shell {
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #f5f5f5;
+}
+
 .app-header {
   position: sticky; top: 0; z-index: 100;
-  background: #fff; border-bottom: 1px solid #e2e8f0;
+  background: #111; border-bottom: 1px solid #f472b6;
   height: 62px; padding: 0 1.5rem;
   display: flex; align-items: center; gap: .85rem;
-  box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  box-shadow: 0 2px 16px rgba(244, 114, 182, .15);
 }
 .logo { display: flex; align-items: center; gap: .6rem; }
 .logo-icon { font-size: 1.6rem; }
-.logo-name { font-weight: 800; font-size: 1.15rem; color: #065f46; line-height: 1; }
-.logo-sub  { font-size: .72rem; color: #64748b; }
+.logo-name { font-weight: 800; font-size: 1.15rem; color: #fde047; line-height: 1; }
+.logo-sub  { font-size: .72rem; color: #f9a8d4; }
 .btn-add {
   margin-left: auto;
-  background: #10b981; color: #fff;
+  background: linear-gradient(135deg, #facc15, #f472b6);
+  color: #0a0a0a;
   border: none; border-radius: 8px;
   padding: .55rem 1.2rem; font-size: .9rem; font-weight: 700;
-  cursor: pointer; transition: background .2s;
+  cursor: pointer; transition: opacity .2s, transform .2s;
 }
-.btn-add:hover { background: #059669; }
+.btn-add:hover { opacity: .9; transform: translateY(-1px); }
 
 .main { max-width: 1280px; margin: 0 auto; padding: 1.75rem 1.5rem; }
 
@@ -354,44 +367,50 @@ onMounted(fetchProducts)
   gap: 1rem; margin-bottom: 1.5rem;
 }
 .stat-card {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
-  padding: 1.1rem; display: flex; align-items: center; gap: .9rem;
+  background: #161616; border: 1px solid #333;
+  border-radius: 12px; padding: 1.1rem;
+  display: flex; align-items: center; gap: .9rem;
 }
 .stat-icon {
   width: 46px; height: 46px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   font-size: 1.3rem; flex-shrink: 0;
 }
-.si-green { background: #d1fae5; }
-.si-red   { background: #fee2e2; }
-.si-amber { background: #fef3c7; }
-.si-blue  { background: #dbeafe; }
+.si-green { background: rgba(250, 204, 21, .15); }
+.si-red   { background: rgba(244, 114, 182, .15); }
+.si-amber { background: rgba(253, 224, 71, .12); }
+.si-blue  { background: rgba(251, 113, 133, .15); }
 .stat-val { font-size: 1.65rem; font-weight: 800; line-height: 1; }
-.stat-label { font-size: .8rem; color: #64748b; margin-top: .2rem; }
+.stat-yellow { color: #fde047; }
+.stat-pink   { color: #f472b6; }
+.stat-money  { font-size: 1.3rem; }
+.stat-label { font-size: .8rem; color: #a3a3a3; margin-top: .2rem; }
 
 .alert-low {
-  background: #fef2f2; border: 1px solid #fca5a5;
+  background: rgba(244, 114, 182, .1); border: 1px solid #f472b6;
   border-radius: 10px; padding: .85rem 1.2rem;
-  font-size: .92rem; margin-bottom: 1.5rem; color: #991b1b;
+  font-size: .92rem; margin-bottom: 1.5rem; color: #fbcfe8;
 }
 
 .toolbar { display: flex; gap: .75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
 .input-search {
   flex: 1; min-width: 200px;
-  padding: .6rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  padding: .6rem 1rem; border: 1.5px solid #404040; border-radius: 8px;
   font-size: .95rem; outline: none; transition: border-color .2s;
+  background: #161616; color: #f5f5f5;
 }
-.input-search:focus { border-color: #10b981; }
+.input-search::placeholder { color: #737373; }
+.input-search:focus { border-color: #facc15; }
 .input-select {
-  padding: .6rem .9rem; border: 1.5px solid #e2e8f0; border-radius: 8px;
-  background: #fff; font-size: .9rem; outline: none; cursor: pointer;
+  padding: .6rem .9rem; border: 1.5px solid #404040; border-radius: 8px;
+  background: #161616; color: #f5f5f5; font-size: .9rem; outline: none; cursor: pointer;
 }
-.input-select:focus { border-color: #10b981; }
-.result-count { font-size: .82rem; color: #64748b; white-space: nowrap; }
+.input-select:focus { border-color: #f472b6; }
+.result-count { font-size: .82rem; color: #a3a3a3; white-space: nowrap; }
 
-.state-box { text-align: center; padding: 4rem 1rem; color: #64748b; }
+.state-box { text-align: center; padding: 4rem 1rem; color: #a3a3a3; }
 .state-icon { font-size: 3rem; margin-bottom: .75rem; }
-.state-title { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: .3rem; }
+.state-title { font-size: 1.1rem; font-weight: 700; color: #fde047; margin-bottom: .3rem; }
 .state-desc { font-size: .9rem; }
 
 .product-grid {
@@ -400,114 +419,121 @@ onMounted(fetchProducts)
   gap: 1.2rem;
 }
 .product-card {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
-  overflow: hidden; transition: transform .2s, box-shadow .2s;
+  background: #161616; border: 1px solid #333; border-radius: 14px;
+  overflow: hidden; transition: transform .2s, box-shadow .2s, border-color .2s;
 }
-.product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
-.product-card.card-low  { border-color: #fca5a5; }
-.product-card.card-out  { border-color: #d1d5db; opacity: .7; }
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(250, 204, 21, .12), 0 4px 16px rgba(244, 114, 182, .1);
+  border-color: #f472b6;
+}
+.product-card.card-low  { border-color: #fb7185; }
+.product-card.card-out  { border-color: #525252; opacity: .65; }
 
 .card-top { padding: 1.1rem; }
 .cat-badge {
   display: inline-block; padding: .2rem .65rem;
   border-radius: 20px; font-size: .72rem; font-weight: 700; margin-bottom: .6rem;
 }
-.c-elec  { background: #dbeafe; color: #1e40af; }
-.c-cloth { background: #fce7f3; color: #9d174d; }
-.c-foot  { background: #f3e8ff; color: #6b21a8; }
-.c-food  { background: #fef3c7; color: #92400e; }
-.c-sport { background: #d1fae5; color: #065f46; }
-.c-book  { background: #e0f2fe; color: #0369a1; }
-.c-furn  { background: #fdf4ff; color: #7e22ce; }
-.c-bag   { background: #fff7ed; color: #9a3412; }
-.c-acc   { background: #f0fdf4; color: #15803d; }
-.c-tool  { background: #f1f5f9; color: #475569; }
-.c-other { background: #ede9fe; color: #5b21b6; }
+.c-elec  { background: rgba(250, 204, 21, .2); color: #fde047; }
+.c-cloth { background: rgba(244, 114, 182, .2); color: #f9a8d4; }
+.c-foot  { background: rgba(251, 113, 133, .2); color: #fda4af; }
+.c-food  { background: rgba(234, 179, 8, .2); color: #facc15; }
+.c-sport { background: rgba(236, 72, 153, .2); color: #f472b6; }
+.c-book  { background: rgba(253, 224, 71, .15); color: #fef08a; }
+.c-furn  { background: rgba(219, 39, 119, .2); color: #fb7185; }
+.c-bag   { background: rgba(250, 204, 21, .15); color: #eab308; }
+.c-acc   { background: rgba(244, 114, 182, .15); color: #ec4899; }
+.c-tool  { background: rgba(163, 163, 163, .15); color: #d4d4d4; }
+.c-other { background: rgba(253, 224, 71, .12); color: #fbbf24; }
 
-.product-name  { font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: .3rem; line-height: 1.35; }
-.product-desc  { font-size: .82rem; color: #64748b; line-height: 1.5; margin-bottom: .75rem; }
-.product-price { font-size: 1.25rem; font-weight: 800; color: #059669; }
+.product-name  { font-size: 1rem; font-weight: 700; color: #fafafa; margin-bottom: .3rem; line-height: 1.35; }
+.product-desc  { font-size: .82rem; color: #a3a3a3; line-height: 1.5; margin-bottom: .75rem; }
+.product-price { font-size: 1.25rem; font-weight: 800; color: #fde047; }
 
 .stock-info { margin-top: .85rem; }
 .stock-row  { display: flex; justify-content: space-between; font-size: .82rem; margin-bottom: .3rem; }
-.stock-label { color: #64748b; }
+.stock-label { color: #a3a3a3; }
 .stock-num   { font-weight: 700; }
-.stock-num.out  { color: #9ca3af; }
-.stock-num.low  { color: #dc2626; }
-.stock-num.mid  { color: #d97706; }
-.stock-num.high { color: #059669; }
-.stock-track { height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
+.stock-num.out  { color: #737373; }
+.stock-num.low  { color: #fb7185; }
+.stock-num.mid  { color: #facc15; }
+.stock-num.high { color: #fde047; }
+.stock-track { height: 6px; background: #262626; border-radius: 3px; overflow: hidden; }
 .stock-fill  { height: 100%; border-radius: 3px; transition: width .4s ease; min-width: 4px; }
-.stock-fill.out  { background: #d1d5db; width: 2% !important; }
-.stock-fill.low  { background: #dc2626; }
-.stock-fill.mid  { background: #f59e0b; }
-.stock-fill.high { background: #10b981; }
+.stock-fill.out  { background: #525252; width: 2% !important; }
+.stock-fill.low  { background: #f472b6; }
+.stock-fill.mid  { background: #facc15; }
+.stock-fill.high { background: #fde047; }
 
 .card-footer {
   display: flex; gap: .5rem;
   padding: .75rem 1.1rem;
-  border-top: 1px solid #f1f5f9; background: #fafafa;
+  border-top: 1px solid #262626; background: #111;
 }
 .btn-edit, .btn-del {
   flex: 1; padding: .45rem; border-radius: 7px;
   font-size: .82rem; font-weight: 600; cursor: pointer; border: none; transition: all .2s;
 }
-.btn-edit { background: #f1f5f9; color: #334155; }
-.btn-edit:hover { background: #e2e8f0; }
-.btn-del  { background: #fee2e2; color: #dc2626; }
-.btn-del:hover  { background: #fecaca; }
+.btn-edit { background: rgba(250, 204, 21, .15); color: #fde047; }
+.btn-edit:hover { background: rgba(250, 204, 21, .25); }
+.btn-del  { background: rgba(244, 114, 182, .15); color: #f472b6; }
+.btn-del:hover  { background: rgba(244, 114, 182, .28); }
 
 .overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.45);
+  background: rgba(0, 0, 0, .75);
   display: flex; align-items: center; justify-content: center;
   z-index: 500; padding: 1rem;
 }
 .modal {
-  background: #fff; border-radius: 16px;
+  background: #161616; border: 1px solid #404040; border-radius: 16px;
   width: 100%; max-width: 480px;
   max-height: 90vh; overflow-y: auto; padding: 2rem;
+  color: #f5f5f5;
 }
-.modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.5rem; color: #1e293b; }
+.modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.5rem; color: #fde047; }
 
 .form-group { margin-bottom: 1rem; }
-.form-label { display: block; font-size: .87rem; font-weight: 600; margin-bottom: .35rem; }
+.form-label { display: block; font-size: .87rem; font-weight: 600; margin-bottom: .35rem; color: #f9a8d4; }
 .form-input {
   width: 100%; padding: .6rem .85rem;
-  border: 1.5px solid #e2e8f0; border-radius: 8px;
+  border: 1.5px solid #404040; border-radius: 8px;
   font-size: .95rem; outline: none; transition: border-color .2s;
+  background: #0a0a0a; color: #f5f5f5;
 }
-.form-input:focus { border-color: #10b981; }
+.form-input:focus { border-color: #f472b6; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
 
 .modal-footer {
   display: flex; gap: .75rem; justify-content: flex-end;
-  padding-top: 1rem; border-top: 1px solid #f1f5f9; margin-top: 1rem;
+  padding-top: 1rem; border-top: 1px solid #262626; margin-top: 1rem;
 }
 .btn-cancel {
-  background: #f1f5f9; color: #334155;
+  background: #262626; color: #d4d4d4;
   border: none; border-radius: 8px; padding: .6rem 1.25rem;
   font-weight: 600; cursor: pointer;
 }
-.btn-cancel:hover { background: #e2e8f0; }
+.btn-cancel:hover { background: #333; }
 .btn-save {
-  background: #10b981; color: #fff;
+  background: linear-gradient(135deg, #facc15, #f472b6);
+  color: #0a0a0a;
   border: none; border-radius: 8px; padding: .6rem 1.25rem;
   font-weight: 700; cursor: pointer;
 }
-.btn-save:hover { background: #059669; }
+.btn-save:hover { opacity: .9; }
 
 .confirm { text-align: center; max-width: 380px; }
 .confirm-icon  { font-size: 3rem; margin-bottom: 1rem; }
-.confirm-title { font-size: 1.1rem; font-weight: 700; margin-bottom: .5rem; }
-.confirm-desc  { font-size: .9rem; color: #64748b; margin-bottom: 1.5rem; line-height: 1.6; }
+.confirm-title { font-size: 1.1rem; font-weight: 700; margin-bottom: .5rem; color: #fde047; }
+.confirm-desc  { font-size: .9rem; color: #a3a3a3; margin-bottom: 1.5rem; line-height: 1.6; }
 .confirm-actions { display: flex; gap: .75rem; justify-content: center; }
 .btn-danger-confirm {
-  background: #dc2626; color: #fff;
+  background: #ec4899; color: #0a0a0a;
   border: none; border-radius: 8px; padding: .6rem 1.4rem;
   font-weight: 700; cursor: pointer;
 }
-.btn-danger-confirm:hover { background: #b91c1c; }
+.btn-danger-confirm:hover { background: #f472b6; }
 
 @media (max-width: 640px) {
   .form-row { grid-template-columns: 1fr; }
